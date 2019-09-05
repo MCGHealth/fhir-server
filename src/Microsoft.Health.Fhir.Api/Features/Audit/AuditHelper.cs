@@ -29,6 +29,7 @@ namespace Microsoft.Health.Fhir.Api.Features.Audit
         private readonly IFhirRequestContextAccessor _fhirRequestContextAccessor;
         private readonly IAuditLogger _auditLogger;
         private readonly ILogger<AuditHelper> _logger;
+        private readonly IAuditHeaderReader _auditHeaderReader;
 
         private IReadOnlyDictionary<(string ControllerName, string ActionName), Attribute> _attributeDictionary;
 
@@ -36,7 +37,8 @@ namespace Microsoft.Health.Fhir.Api.Features.Audit
             IActionDescriptorCollectionProvider actionDescriptorCollectionProvider,
             IFhirRequestContextAccessor fhirRequestContextAccessor,
             IAuditLogger auditLogger,
-            ILogger<AuditHelper> logger)
+            ILogger<AuditHelper> logger,
+            IAuditHeaderReader auditHeaderReader)
         {
             EnsureArg.IsNotNull(actionDescriptorCollectionProvider, nameof(actionDescriptorCollectionProvider));
             EnsureArg.IsNotNull(fhirRequestContextAccessor, nameof(fhirRequestContextAccessor));
@@ -47,6 +49,7 @@ namespace Microsoft.Health.Fhir.Api.Features.Audit
             _fhirRequestContextAccessor = fhirRequestContextAccessor;
             _auditLogger = auditLogger;
             _logger = logger;
+            _auditHeaderReader = auditHeaderReader;
         }
 
         /// <inheritdoc />
@@ -128,7 +131,8 @@ namespace Microsoft.Health.Fhir.Api.Features.Audit
                     statusCode: statusCode,
                     correlationId: fhirRequestContext.CorrelationId,
                     callerIpAddress: httpContext.Connection?.RemoteIpAddress?.ToString(),
-                    callerClaims: claimsExtractor.Extract());
+                    callerClaims: claimsExtractor.Extract(),
+                    customHeaders: _auditHeaderReader.Read(httpContext));
             }
         }
     }

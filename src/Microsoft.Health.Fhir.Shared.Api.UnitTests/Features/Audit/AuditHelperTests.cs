@@ -46,6 +46,7 @@ namespace Microsoft.Health.Fhir.Api.UnitTests.Features.Audit
 
         private readonly HttpContext _httpContext = new DefaultHttpContext();
         private readonly IClaimsExtractor _claimsExtractor = Substitute.For<IClaimsExtractor>();
+        private readonly IAuditHeaderReader _auditHeaderReader = new AuditHeaderReader();
 
         public AuditHelperTests()
         {
@@ -89,7 +90,7 @@ namespace Microsoft.Health.Fhir.Api.UnitTests.Features.Audit
 
             _claimsExtractor.Extract().Returns(Claims);
 
-            _auditHelper = new AuditHelper(_actionDescriptorCollectionProvider, _fhirRequestContextAccessor, _auditLogger, NullLogger<AuditHelper>.Instance);
+            _auditHelper = new AuditHelper(_actionDescriptorCollectionProvider, _fhirRequestContextAccessor, _auditLogger, NullLogger<AuditHelper>.Instance, _auditHeaderReader);
 
             ((IStartable)_auditHelper).Start();
         }
@@ -139,7 +140,8 @@ namespace Microsoft.Health.Fhir.Api.UnitTests.Features.Audit
                 statusCode: null,
                 correlationId: CorrelationId,
                 callerIpAddress: CallerIpAddressInString,
-                callerClaims: Claims);
+                callerClaims: Claims,
+                customHeaders: _auditHeaderReader.Read(_httpContext));
         }
 
         [Fact]
@@ -183,7 +185,8 @@ namespace Microsoft.Health.Fhir.Api.UnitTests.Features.Audit
                 expectedStatusCode,
                 CorrelationId,
                 CallerIpAddressInString,
-                Claims);
+                Claims,
+                customHeaders: _auditHeaderReader.Read(_httpContext));
         }
 
         [Fact]
